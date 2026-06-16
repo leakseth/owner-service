@@ -1,10 +1,12 @@
 package com.piseth.java.exception;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.bind.support.WebExchangeBindException;
 import org.springframework.web.server.ServerWebExchange;
 import reactor.core.publisher.Mono;
 
@@ -19,6 +21,39 @@ public class GlobalExceptionHandler {
         log.warn("bad request. path={}", exchange.getRequest().getPath(), ex);
 
         return Mono.just(problem(exchange, HttpStatus.BAD_REQUEST, "Bad request", ex.getMessage(), "/errors/bad-request"));
+    }
+
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public Mono<ProblemDetail> handleConflict(DataIntegrityViolationException ex, ServerWebExchange exchange){
+        log.warn("Data integrity violation. path={}", exchange.getRequest().getPath(), ex);
+
+        return Mono.just(problem(exchange, HttpStatus.CONFLICT,
+                "conflict",
+                "Duplicate or invalid data",
+                "errors/conflict"));
+    }
+
+    @ExceptionHandler(WebExchangeBindException.class)
+    public Mono<ProblemDetail> handleValidation(WebExchangeBindException ex, ServerWebExchange exchange){
+        log.warn("Validation error. path={}", exchange.getRequest().getPath(), ex);
+
+        String message = "Validation failed.";
+        if (!ex.getAllErrors().isEmpty() && ex.getAllErrors().get(0).getDefaultMessage() != null){
+            message = ex.getAllErrors().get(0).getDefaultMessage();
+        }
+
+        return Mono.just(problem(exchange, HttpStatus.BAD_REQUEST,
+                "Validation error.", message,
+                "/errors/validation-error"));
+    }
+
+    @ExceptionHandler(Exception.class)
+    public Mono<ProblemDetail> handleGeneric(Exception ex, ServerWebExchange exchange){
+        log.error("Unhandled exception. path={}", exchange.getRequest().getPath(), ex);
+
+        return Mono.just(problem(exchange, HttpStatus.INTERNAL_SERVER_ERROR, "Internal error",
+                "Unexpected error occurred.",
+                "/errors/internal-error"));
     }
 
     private ProblemDetail problem(ServerWebExchange exchange, HttpStatus status, String title, String detail, String typePath){

@@ -11,8 +11,9 @@ public class OwnerRegisterRequestNormalizer {
     private final PhoneNormalizer phoneNormalizer;
 
     public OwnerRegisterRequest normalize(OwnerRegisterRequest request){
-        request.setEmail(emailNormalizer.normalize(request.getEmail()));
-        request.setPhone(phoneNormalizer.normalize(request.getPhone()));
-        return request;
+        OwnerRegisterRequest newRequest = new OwnerRegisterRequest();
+        newRequest.setEmail(emailNormalizer.normalize(request.getEmail()));
+        newRequest.setPhone(phoneNormalizer.normalize(request.getPhone()));
+        return newRequest;
     }
 }

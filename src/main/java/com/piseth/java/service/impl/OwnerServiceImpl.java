@@ -10,11 +10,13 @@ import com.piseth.java.repository.OwnerRepository;
 import com.piseth.java.service.OwnerService;
 import com.piseth.java.validation.OwnerRegistrationValidator;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class OwnerServiceImpl implements OwnerService {
     private final OwnerRepository ownerRepository;
     private final OwnerMapper ownerMapper;
@@ -31,6 +33,7 @@ public class OwnerServiceImpl implements OwnerService {
 
         return registrationValidator.validate(normalized)
                 .then(ownerRepository.save(pending))
+                .doOnSuccess(saved2 -> log.info("Owner registered successfully. ownerId={}", saved2))
                 .map(ownerMapper::toResponse);
     }
 }
